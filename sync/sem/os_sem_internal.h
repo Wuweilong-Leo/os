@@ -1,0 +1,9 @@
+#ifndef OS_SEM_INTERNAL_H
+#define OS_SEM_INTERNAL_H
+#include "os_sem_external.h"
+#include "os_sys.h"
+
+#define OS_SEM_ERR_PEND_AGAIN OS_BUILD_ERR_CODE(OS_SEM_MID, 0x0)
+#define OS_SEM_ERR_POST_NOT_HOLDER OS_BUILD_ERR_CODE(OS_SEM_MID, 0x1)
+#define OS_SEM_ERR_POST_NO_PEND OS_BUILD_ERR_CODE(OS_SEM_MID, 0x2)
+#endif
