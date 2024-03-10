@@ -18,8 +18,9 @@ U32 OsSemPend(struct OsSem *sem) {
   struct OsList *semListNode = &sem->semListNode;
   struct OsTaskCb *curTask = OS_RUNNING_TASK();
   struct OsList *tskPendListNode = &curTask->pendListNode;
+  enum OsIntStatus intSave;
 
-  (void)OsIntLock();
+  intSave = OsIntLock();
 
   /* 如果此时信号量持有者是本身，不允许再持有 */
   if (sem->holder == curTask) {
@@ -42,7 +43,7 @@ U32 OsSemPend(struct OsSem *sem) {
   sem->holder = curTask;
   OsListAddTail(&curTask->semList, semListNode);
 
-  (void)OsIntUnlock();
+  OsIntRestore(intSave);
 
   return OS_OK;
 }
@@ -53,8 +54,9 @@ U32 OsSemPost(struct OsSem *sem) {
   struct OsList *semListNode = &sem->semListNode;
   struct OsTaskCb *curTask = OS_RUNNING_TASK();
   struct OsTaskCb *nextTask;
+  enum OsIntStatus intSave;
 
-  (void)OsIntLock();
+  intSave = OsIntLock();
 
   if (sem->holder != curTask) {
     return OS_SEM_ERR_POST_NOT_HOLDER;
@@ -74,7 +76,7 @@ U32 OsSemPost(struct OsSem *sem) {
   OsSchedAddTskToReadyList(nextTask);
   nextTask->status = OS_TASK_READY;
 
-  (void)OsIntUnlock();
+  OsIntRestore(intSave);
 
   return OS_OK;
 }

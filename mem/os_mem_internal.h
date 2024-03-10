@@ -15,16 +15,10 @@ struct OsMemPool {
   U32 size;
 };
 
-enum pool_flags { PF_KERNEL = 1, PF_USER = 2 };
-#define PG_P_1 1
-#define PG_P_0 0
-#define PG_RW_R 0
-#define PG_RW_W 2
-#define PG_US_S 0
-#define PG_US_U 4
-void mem_init();
-void *kernel_pages_malloc(uint32_t pg_cnt);
-void *user_pages_malloc(uint32_t pg_cnt);
-void *target_vaddr_malloc(enum pool_flags pf, uint32_t vaddr);
-uint32_t addr_v2p(uint32_t vaddr);
+#define OS_MEM_BITMAP_BASE 0XC009A000
+#define OS_VIR_MEM_START_ADDR 0XC0100000
+
+#define OS_PG_DIR_START_ADDR 0X100000
+#define OS_PG_DIR_CNT 1
+#define OS_PG_TAB_CNT 255
 #endif
