@@ -1,6 +1,7 @@
 #ifndef OS_DEBUG_EXTERNAL_H
 #define OS_DEBUG_EXTERNAL_H
 #include "os_def.h"
+#include "os_print_external.h"
 
 #define DEBUG_ENABLE TRUE
 
@@ -18,8 +19,13 @@ extern void OsDebugPanicSpin(char *filename, int line, const char *func,
       OS_PANIC(#condition);                                                    \
     }                                                                          \
   } while (0);
+
+#define OS_DEBUG_PRINT_HEX(hex) OsPrintHex(hex)
+#define OS_DEBUG_PRINT_STR(hex) OsPrintStr(str)
 #else
 #define ASSERT(condition)
+#define OS_DEBUG_PRINT_HEX(hex)
+#define OS_DEBUG_PRINT_STR(str)
 #endif
 
 #endif
