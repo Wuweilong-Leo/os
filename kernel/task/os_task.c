@@ -18,6 +18,7 @@ U32 OsTaskConfig(void) {
   for (i = 0; i < OS_TASK_MAX_NUM; i++) {
     g_taskCbArray[i].pid = i;
     g_taskCbArray[i].status = OS_TASK_NOT_CREATE;
+    g_taskCbArray[i].ticks = 0;
     OsListInit(&g_taskCbArray[i].freeListNode);
     OsListAddTail(&g_taskFreeList, &g_taskCbArray[i].freeListNode);
   }
@@ -89,6 +90,7 @@ U32 OsTaskCreate(struct OsTaskCreateParam *param, U32 *taskId) {
 
 U32 OsTaskResume(U32 taskId) {
   struct OsTaskCb *taskCb = &g_taskCbArray[taskId];
+  enum OsIntStatus intSave;
 
   /* 必须创建了并没resume才能resume */
   if (taskCb->status != OS_TASK_NOT_RESUME) {
@@ -97,8 +99,10 @@ U32 OsTaskResume(U32 taskId) {
 
   taskCb->status = OS_TASK_READY;
 
+  intSave = OsIntLock();
   /* 加入readyList, 参与调度 */
-  OsSchedAddTskToReadyList(taskCb);
+  OsSchedAddTskToRdyListTail(taskCb);
+  OsIntRestore(intSave);
 
   return OS_OK;
 }

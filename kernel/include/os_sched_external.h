@@ -17,8 +17,8 @@ struct OsRunQue {
 
 extern struct OsRunQue g_runQue;
 extern void OsSchedMainProc(void);
-extern void OsSchedDelTskFromReadyList(struct OsTaskCb *tsk);
-extern void OsSchedAddTskToReadyList(struct OsTaskCb *tsk);
+extern void OsSchedDelTskFromRdyList(struct OsTaskCb *tsk);
+extern void OsSchedAddTskToRdyListTail(struct OsTaskCb *tsk);
 extern void OsSchedActive(void);
 
 #define OS_RUNNING_TASK() (g_runQue.curTask)

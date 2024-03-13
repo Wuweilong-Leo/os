@@ -21,7 +21,7 @@ extern void OsDebugPanicSpin(char *filename, int line, const char *func,
   } while (0);
 
 #define OS_DEBUG_PRINT_HEX(hex) OsPrintHex(hex)
-#define OS_DEBUG_PRINT_STR(hex) OsPrintStr(str)
+#define OS_DEBUG_PRINT_STR(str) OsPrintStr(str)
 #else
 #define ASSERT(condition)
 #define OS_DEBUG_PRINT_HEX(hex)

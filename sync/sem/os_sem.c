@@ -33,7 +33,7 @@ U32 OsSemPend(struct OsSem *sem) {
       OsListAddTail(pendList, tskPendListNode);
     }
 
-    OsSchedDelTskFromReadyList(curTask);
+    OsSchedDelTskFromRdyList(curTask);
     curTask->status = OS_TASK_SEM_PENDING;
     /* 进行任务调度 */
     OsSchedActive();
@@ -73,7 +73,7 @@ U32 OsSemPost(struct OsSem *sem) {
   nextTask =
       OS_LIST_GET_STRUCT_ENTRY(struct OsTaskCb, pendListNode, pendList->next);
   OsListDelNode(&nextTask->pendListNode);
-  OsSchedAddTskToReadyList(nextTask);
+  OsSchedAddTskToRdyListTail(nextTask);
   nextTask->status = OS_TASK_READY;
 
   OsIntRestore(intSave);

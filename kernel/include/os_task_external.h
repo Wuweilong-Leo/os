@@ -13,7 +13,8 @@ enum OsTaskStatus {
   OS_TASK_NOT_RESUME,
   OS_TASK_RUNNING,
   OS_TASK_READY,
-  OS_TASK_SEM_PENDING
+  OS_TASK_SEM_PENDING,
+  OS_TASK_TIME_SLICE_PENDING
 };
 
 /* 任务控制块 */
@@ -25,6 +26,7 @@ struct OsTaskCb {
   U32 arg[OS_TASK_ARG_NUM];
   enum OsTaskStatus status;
   U32 prio;
+  U32 ticks;
   char name[OS_TASK_NAME_MAX_SIZE];
   struct OsList readyListNode;
   struct OsList pendListNode;

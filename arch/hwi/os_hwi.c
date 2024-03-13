@@ -9,4 +9,6 @@ U32 OsHwiCreate(U32 hwiNum, intHandler handler, void *arg) {
   return OS_OK;
 }
 
-U32 OsHwiTail(void) { OsSchedMainProc(); }
+U32 OsHwiTail(void) {   
+  OsSchedMainProc(); 
+}

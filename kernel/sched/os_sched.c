@@ -1,6 +1,8 @@
 #include "os_btmp_external.h"
 #include "os_sched_internal.h"
 #include "os_hwi_external.h"
+#include "os_task_external.h"
+#include "os_debug_external.h"
 
 struct OsRunQue g_runQue;
 
@@ -30,16 +32,15 @@ struct OsTaskCb *OsSchedPickNextTask(void) {
   return nextTask;
 }
 
-void OsSchedDelTskFromReadyList(struct OsTaskCb *tsk) {
+/* 外部关中断 */
+void OsSchedDelTskFromRdyList(struct OsTaskCb *tsk) {
   struct OsList *readyList;
   struct OsBtmp *readyListMask;
   U32 prio = tsk->prio;
-  enum OsIntStatus intSave;
 
   readyList = OS_GET_READY_LIST(prio);
   readyListMask = &g_runQue.readyListMask;
 
-  intSave = OsIntLock();
   OsListDelNode(&tsk->readyListNode);
 
   if (OsListIsEmpty(readyList)) {
@@ -49,28 +50,24 @@ void OsSchedDelTskFromReadyList(struct OsTaskCb *tsk) {
   if (tsk == OS_RUNNING_TASK()) {
     g_runQue.needSched = TRUE;
   }
-
-  OsIntRestore(intSave);
 }
 
-void OsSchedAddTskToReadyList(struct OsTaskCb *tsk) {
+/* 外部关中断 */
+void OsSchedAddTskToRdyListTail(struct OsTaskCb *tsk) {
   struct OsList *readyList;
   struct OsBtmp *readyListMask;
   U32 prio = tsk->prio;
   struct OsTaskCb *curTask = OS_RUNNING_TASK();
-  enum OsIntStatus intSave;
 
   readyList = OS_GET_READY_LIST(prio);
   readyListMask = &g_runQue.readyListMask;
 
-  intSave = OsIntLock();
   OsListAddTail(readyList, &tsk->readyListNode);
   OsBtmpSet(readyListMask, prio);
 
   if (prio < curTask->prio) {
     g_runQue.needSched = TRUE;
   }
-  OsIntRestore(intSave);
 }
 
 void OsSchedMainProc(void) {
@@ -78,7 +75,8 @@ void OsSchedMainProc(void) {
   struct OsTaskCb *nextTask = curTask;
 
   if (g_runQue.needSched) {
-
+    /* 现在的任务一定不是ready态 */
+    OS_ASSERT(curTask->status != OS_TASK_READY);
     nextTask = OsSchedPickNextTask();
     nextTask->status = OS_TASK_RUNNING;
     g_runQue.curTask = nextTask;

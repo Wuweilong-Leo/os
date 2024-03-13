@@ -1,7 +1,4 @@
 #include "os_cpu_i386.h"
-; 和中断不通，因为switch_to 是个函数，编译器约定被调用者只要保持 
-; esi edi ebx ebp esp 不变就行了。因此即使切换线程，只用上下文
-; 其实就是这几个寄存器。
 
 [bits 32]
 
