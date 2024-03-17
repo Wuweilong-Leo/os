@@ -9,6 +9,28 @@ U32 OsHwiCreate(U32 hwiNum, intHandler handler, void *arg) {
   return OS_OK;
 }
 
-U32 OsHwiTail(void) {   
+void OsHwiHandle(U32 hwiNum) {
+  intHandler handler = g_hwiForm[hwiNum].handler;
+  void *arg = g_hwiForm[hwiNum].arg;
+
+  handler(arg);
+}
+
+INLINE void OsHwiProcDelayTask(void) {
+  struct OsList *delayList = &g_runQue.delayList;
+  struct OsTaskCb *delayTask;
+
+  while (delayList->next != delayList) {
+    delayTask = OS_LIST_GET_STRUCT_ENTRY(struct OsTaskCb, delayListNode, delayList->next);
+    if (delayTask->delayTicks == 0) {
+      OsSchedAddTskToRdyListTail(delayTask);
+    }
+    delayList = delayList->next;
+  }
+  
+}
+
+U32 OsHwiTail(void) {
+  OsHwiProcDelayTask();   
   OsSchedMainProc(); 
 }

@@ -35,7 +35,7 @@ INLINE U32 OsTaskAllocStack(uintptr_t *stackPtr) {
   /* 申请4K内存作为栈 */
   stkMemBase = OsMemAlloc(OS_PG_SIZE);
   if (stackPtr == NULL) {
-    return OS_TASK_CREATE_ALLOC_STACK_NO_MEM;
+    return OS_TASK_ERR_CREATE_ALLOC_STACK_NO_MEM;
   }
 
   /* 把栈初始化成魔术字 */
@@ -61,7 +61,13 @@ U32 OsTaskCreate(struct OsTaskCreateParam *param, U32 *taskId) {
 
   intSave = OsIntLock();
   if (OsListIsEmpty(&g_taskFreeList)) {
+    OsIntRestore(intSave);
     return OS_TASK_ERR_NO_FREE_CB;
+  }
+
+  if (param == NULL || param->entryFunc == NULL) {
+    OsIntRestore(intSave);
+    return OS_TASK_ERR_CREATE_PARAM_ILLEGAL;
   }
 
   freeCb = OS_LIST_GET_STRUCT_ENTRY(struct OsTaskCb, freeListNode,
@@ -102,6 +108,65 @@ U32 OsTaskResume(U32 taskId) {
   intSave = OsIntLock();
   /* 加入readyList, 参与调度 */
   OsSchedAddTskToRdyListTail(taskCb);
+  OsIntRestore(intSave);
+
+  return OS_OK;
+}
+
+INLINE bool OsTaskHoldsSem(struct OsTaskCb *taskCb) {
+  return OsListIsEmpty(&taskCb->semList);
+}
+
+U32 OsTaskDelete(U32 taskId) {
+  struct OsTaskCb *taskCb = &g_taskCbArray[taskId];
+  enum OsIntStatus intSave;
+
+  intSave = OsIntLock();
+
+  /* 只能删除ready态的任务 */
+  if (taskCb->status != OS_TASK_READY) {
+    OsIntRestore(intSave);
+    return OS_TASK_ERR_DEL_NOT_READY;
+  }
+ 
+  if (OsTaskHoldsSem(taskCb)) {
+    OsIntRestore(intSave);
+    return OS_TASK_ERR_DEL_HOLDS_SEM;
+  }
+
+  /* 归还到free链表中 */
+  OsListAddTail(&g_taskFreeList, &taskCb->freeListNode);
+  /* 从ready队列里删除 */
+  OsListDelNode(&taskCb->readyListNode);
+
+  taskCb->entry = NULL;
+  OsMemFree(taskCb->stkPtr);
+  taskCb->stkPtr = NULL;
+  taskCb->status = OS_TASK_NOT_CREATE;
+  taskCb->ticks = 0;
+  memset(taskCb->name, 0, OS_TASK_NAME_MAX_SIZE);
+  memset(taskCb->arg, 0, sizeof(void *) * OS_TASK_ARG_NUM);
+
+  OsIntRestore(intSave);
+  return OS_OK;
+}
+
+U32 OsTaskDelay(U32 ticks) {
+  struct OsTaskCb* curTask = OS_RUNNING_TASK();
+  enum OsIntStatus intSave;
+
+  if (ticks == 0) {
+    return OS_TASK_ERR_DELAY_TICKS_ZERO;
+  }
+
+  intSave = OsIntLock();
+
+  curTask->delayTicks = ticks;
+  curTask->status = OS_TASK_IN_DELAY; 
+  OsSchedDelTskFromRdyList(curTask);
+  OsListAddTail(&g_runQue.delayList, &curTask->delayListNode);
+  OsSchedActive();
+  
   OsIntRestore(intSave);
 
   return OS_OK;

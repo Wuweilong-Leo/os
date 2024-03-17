@@ -23,18 +23,14 @@ static void OsTimerHwiHandler(void)
   struct OsTaskCb *curTask = OS_RUNNING_TASK();
 
   curTask->ticks++;
+  curTask->delayTicks--;
 
-  if (curTask->ticks == g_timeSliceTicks)
-  {
+  if (curTask->ticks == g_timeSliceTicks) {
     curTask->status = OS_TASK_TIME_SLICE_PENDING;
     /* 从ready队列里删掉 */
     OsSchedDelTskFromRdyList(curTask);
     /* 加入到ready队列尾部 */
     OsSchedAddTskToRdyListTail(curTask);
-  }
-  else
-  {
-    curTask->ticks--;
   }
 }
 

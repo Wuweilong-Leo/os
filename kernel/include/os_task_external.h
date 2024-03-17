@@ -14,7 +14,8 @@ enum OsTaskStatus {
   OS_TASK_RUNNING,
   OS_TASK_READY,
   OS_TASK_SEM_PENDING,
-  OS_TASK_TIME_SLICE_PENDING
+  OS_TASK_TIME_SLICE_PENDING,
+  OS_TASK_IN_DELAY
 };
 
 /* 任务控制块 */
@@ -27,11 +28,13 @@ struct OsTaskCb {
   enum OsTaskStatus status;
   U32 prio;
   U32 ticks;
+  U32 delayTicks;
   char name[OS_TASK_NAME_MAX_SIZE];
   struct OsList readyListNode;
   struct OsList pendListNode;
   /* 拥有的信号量链表 */
   struct OsList semList;
+  struct OsList delayListNode;
 };
 
 struct OsTaskCreateParam {

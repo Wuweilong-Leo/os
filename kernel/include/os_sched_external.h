@@ -13,6 +13,7 @@ struct OsRunQue {
   struct OsTaskCb *idleTask;
   struct OsBtmp readyListMask;
   struct OsList readyList[OS_PRIO_MAX_NUM];
+  struct OsList delayList;
 };
 
 extern struct OsRunQue g_runQue;

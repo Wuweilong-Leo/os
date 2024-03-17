@@ -4,7 +4,7 @@
 #if (OS_CPU_TYPE == OS_I386)
 #include "os_i386_hwi.h"
 #endif
-typedef void *intHandler;
+typedef void (*intHandler) (void *arg);
 
 enum OsIntStatus { INT_OFF, INT_ON };
 
