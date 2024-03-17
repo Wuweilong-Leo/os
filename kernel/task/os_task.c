@@ -33,7 +33,7 @@ INLINE U32 OsTaskAllocStack(uintptr_t *stackPtr) {
   U32 i;
 
   /* 申请4K内存作为栈 */
-  stkMemBase = OsMemAlloc(OS_PG_SIZE);
+  stkMemBase = OsMemAllocPgs(OS_TASK_STACK_SIZE / OS_PG_SIZE);
   if (stackPtr == NULL) {
     return OS_TASK_ERR_CREATE_ALLOC_STACK_NO_MEM;
   }
@@ -128,7 +128,7 @@ U32 OsTaskDelete(U32 taskId) {
     OsIntRestore(intSave);
     return OS_TASK_ERR_DEL_NOT_READY;
   }
- 
+
   if (OsTaskHoldsSem(taskCb)) {
     OsIntRestore(intSave);
     return OS_TASK_ERR_DEL_HOLDS_SEM;
@@ -152,7 +152,7 @@ U32 OsTaskDelete(U32 taskId) {
 }
 
 U32 OsTaskDelay(U32 ticks) {
-  struct OsTaskCb* curTask = OS_RUNNING_TASK();
+  struct OsTaskCb *curTask = OS_RUNNING_TASK();
   enum OsIntStatus intSave;
 
   if (ticks == 0) {
@@ -162,11 +162,11 @@ U32 OsTaskDelay(U32 ticks) {
   intSave = OsIntLock();
 
   curTask->delayTicks = ticks;
-  curTask->status = OS_TASK_IN_DELAY; 
+  curTask->status = OS_TASK_IN_DELAY;
   OsSchedDelTskFromRdyList(curTask);
   OsListAddTail(&g_runQue.delayList, &curTask->delayListNode);
   OsSchedActive();
-  
+
   OsIntRestore(intSave);
 
   return OS_OK;

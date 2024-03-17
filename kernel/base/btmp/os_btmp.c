@@ -1,13 +1,9 @@
 #include "os_btmp_external.h"
 
-INLINE U32 OsBtmpGetByteLenByBitNum(U32 bitNum) {
-  return (bitNum % 8) ? (bitNum / 8 + 1) : (bitNum / 8);
-}
-
 void OsBtmpInit(struct OsBtmp *btmp, U8 *base, U32 bitNum) {
   btmp->base = base;
   btmp->bitNum = bitNum;
-  btmp->byteLen = OsBtmpGetByteLenByBitNum(bitNum);
+  btmp->byteLen = OS_BTMP_GET_BYTE_LEN_BY_BIT_NUM(bitNum);
   memset(btmp->base, 0, btmp->byteLen);
 }
 
