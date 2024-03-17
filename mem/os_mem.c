@@ -136,4 +136,33 @@ uintptr_t OsMemAllocPgs(U32 pgNum) {
   }
 
   return vaddrBase;
-} 
+}
+
+/* vaddr必须4096对齐 */
+U32 OsMemAllocPgsByAddr(uintptr_t vaddr) {
+  U32 idx;
+  uintptr_t paddr;
+
+  if (!OS_ADDR_PG_ALIGN((U32)vaddr)) {
+    return OS_MEM_ERR_VADDR_NOT_PG_ALIGN;
+  }
+
+  idx = ((U32)vaddr - (U32)g_virMemPool.base) / OS_PG_SIZE;
+
+  if (OsBtmpGet(&g_virMemPool.usedPgMask, idx) == 1) {
+    return OS_MEM_ERR_VIR_PG_NOT_FREE;
+  }
+
+  OsBtmpSet(&g_virMemPool.usedPgMask, idx);
+
+  if (!OsBtmpScan(&g_phyMemPool.usedPgMask, 0, 1, &idx)) {
+    return OS_MEM_ERR_NO_FREE_PHY_PG;
+  }
+
+  OsBtmpSet(&g_phyMemPool.usedPgMask, idx);
+  paddr = (uintptr_t)((U32)g_phyMemPool.base + idx * OS_PG_SIZE);
+
+  OsMemMapVir2Phy(vaddr, paddr);
+
+  return OS_OK;
+}

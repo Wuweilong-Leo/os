@@ -3,6 +3,7 @@
 #include "os_def.h"
 #define OS_PG_SIZE 4096
 
-extern uintptr_t OsMemAllocPgs(U32 size);
+extern uintptr_t OsMemAllocPgs(U32 pgNum);
+extern U32 OsMemAllocPgsByAddr(uintptr_t vaddr);
 extern U32 OsMemFree(void *addr);
 #endif

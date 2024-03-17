@@ -5,6 +5,7 @@ enum OsMid {
   OS_HWI_MID = 1,
   OS_SEM_MID = 2,
   OS_TASK_MID = 3,
-  OS_SCHED_MID = 4
+  OS_SCHED_MID = 4,
+  OS_MEM_MID = 5
 };
 #endif

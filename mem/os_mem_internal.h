@@ -4,6 +4,7 @@
 #include "os_def.h"
 #include "os_mem_external.h"
 #include "os_sem_external.h"
+#include "os_sys.h"
 
 /* 内存池 */
 struct OsMemPool {
@@ -47,4 +48,9 @@ struct OsMemPool {
 #define OS_GET_FREE_MEM_SIZE(allMemSize) ((allMemSize)-OS_USED_MEM_SIZE)
 #define OS_GET_FREE_PG_NUM(freeMemSize) ((freeMemSize) / OS_PG_SIZE)
 
+#define OS_ADDR_PG_ALIGN(addr) ((addr) & 0xFFF == 0)
+
+#define OS_MEM_ERR_VADDR_NOT_PG_ALIGN OS_BUILD_ERR_CODE(OS_MEM_MID, 0x0)
+#define OS_MEM_ERR_VIR_PG_NOT_FREE OS_BUILD_ERR_CODE(OS_MEM_MID, 0x1)
+#define OS_MEM_ERR_NO_FREE_PHY_PG OS_BUILD_ERR_CODE(OS_MEM_MID, 0x2)
 #endif
