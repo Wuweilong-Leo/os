@@ -1,18 +1,86 @@
 #include "os_def.h"
 #include "os_print_internal.h"
+#include "string.h"
 
-OsPrintCharHook g_printCharHook = NULL;
+INLINE void OsPrintRollScreen(void) {
+  memcpy(OS_ROLL_VIDEO_DST_ADDR, OS_ROLL_VIDEO_SRC_ADDR, 960 * 4);
+}
+
+INLINE void OsPrintCleanLastLine(void) {
+  U32 offset = 3840;
+  U32 i;
+  U8 *videoBaseAddr = (U8 *)OS_VIDEO_BASE_ADDR;
+
+  for (i = 0; i < OS_SCREEN_COL_MAX; i++) {
+    videoBaseAddr[offset++] = ' ';
+    videoBaseAddr[offset++] = OS_BLK_BACK_WHT_WORD;
+  }
+}
+
+INLINE void OsPrintSetCursor(U16 target) {
+  U8 high = (target >> 8) & 0xff;
+  U8 low = target & 0xff;
+  OS_EMBED_ASM("outb %%al, %%dx" ::"d"(OS_CRT_ADDR_REG),
+               "a"(OS_CUR_POS_HIGH_INDEX));
+  OS_EMBED_ASM("outb %%al, %%dx" ::"d"(OS_CRT_DATA_REG), "a"(high));
+  OS_EMBED_ASM("outb %%al, %%dx" ::"d"(OS_CRT_ADDR_REG),
+               "a"(OS_CUR_POS_LOW_INDEX));
+  OS_EMBED_ASM("outb %%al, %%dx" ::"d"(OS_CRT_DATA_REG), "a"(low));
+}
+
+INLINE U16 OsPrintGetCursor(void) {
+  U16 curPosLow;
+  U16 curPosHigh;
+  OS_EMBED_ASM("outb %%al, %%dx" ::"d"(OS_CRT_ADDR_REG),
+               "a"(OS_CUR_POS_HIGH_INDEX));
+  OS_EMBED_ASM("inb %%dx, %%al" : "=a"(curPosHigh) : "d"(OS_CRT_DATA_REG));
+  OS_EMBED_ASM("outb %%al, %%dx" ::"d"(OS_CRT_ADDR_REG),
+               "a"(OS_CUR_POS_LOW_INDEX));
+  OS_EMBED_ASM("inb %%dx, %%al" : "=a"(curPosLow) : "d"(OS_CRT_DATA_REG));
+  return ((curPosHigh << 8) & 0xff00) | (curPosLow & 0x00ff);
+}
+
+void OsPrintCheckOutOfScreen(U16 *nextPos) {
+  U16 nextCurPos = *nextPos;
+  if (nextCurPos >= OS_SCREEN_MAX) {
+    OsPrintRollScreen();
+    OsPrintCleanLastLine();
+    *nextPos = OS_SCREEN_MAX - OS_SCREEN_COL_MAX;
+  }
+}
+
+void OsPrintChar(char c) {
+  U16 curPos;
+  U16 nextCurPos;
+  U32 offset;
+  U8 *videoBaseAddr = (U8 *)OS_VIDEO_BASE_ADDR;
+
+  curPos = OsPrintGetCursor();
+
+  if (c == '\r' || c == '\n') {
+    nextCurPos = curPos - curPos % OS_SCREEN_COL_MAX + OS_SCREEN_COL_MAX;
+    OsPrintCheckOutOfScreen(&nextCurPos);
+  } else if (c == '\b') {
+    offset = (curPos - 1) * 2;
+    videoBaseAddr[offset] = ' ';
+    videoBaseAddr[offset + 1] = OS_BLK_BACK_WHT_WORD;
+    nextCurPos = curPos - 1;
+  } else {
+    offset = curPos * 2;
+    videoBaseAddr[offset] = c;
+    videoBaseAddr[offset + 1] = OS_BLK_BACK_WHT_WORD;
+    nextCurPos = curPos + 1;
+    OsPrintCheckOutOfScreen(&nextCurPos);
+  }
+  OsPrintSetCursor(nextCurPos);
+}
 
 void OsPrintStr(char *str) {
   char *str = str;
   U32 i;
 
-  if (g_printCharHook == NULL) {
-    return;
-  }
-
   while (str[i] != 0) {
-    g_printCharHook(str[i]);
+    OsPrintChar(str[i]);
     i++;
   }
 }

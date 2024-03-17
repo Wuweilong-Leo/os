@@ -16,7 +16,7 @@ typedef void *uintptr_t;
 /* 强制内联 */
 #define INLINE static __attribute__((always_inline))
 
-#define OS_EMBED_ASM(asmCode) __asm volatile(asmCode)
+#define OS_EMBED_ASM(...) __asm volatile(__VA_ARGS__)
 
 #define OS_BUILD_ERR_CODE(mid, errCode) (((mid) << 16) | ((0xFFFF) & (errCode)))
 #endif
